@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../data/site_data.dart';
 import '../theme/app_theme.dart';
 import 'common.dart';
@@ -14,13 +15,15 @@ class SiteHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isTablet = AppSizing.isTablet(context);
+    // Show the full inline nav only when there is enough room for both the
+    // full brand lockup and every nav item; otherwise use the hamburger.
+    final showFullNav = MediaQuery.sizeOf(context).width >= 1150;
     final currentRoute = GoRouterState.of(context).uri.path;
 
     return Material(
-      color: AppColors.white.withValues(alpha: 0.94),
+      color: AppColors.white,
       elevation: 0,
-      child: Container(
+      child: DecoratedBox(
         decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: AppColors.slate200)),
         ),
@@ -29,9 +32,15 @@ class SiteHeader extends StatelessWidget {
             height: 78,
             child: Row(
               children: [
-                _Brand(onTap: () => context.go('/')),
+                // On desktop the brand takes its natural (full) width so the
+                // company name never truncates; the Spacer alone absorbs the
+                // free space. On tablet/mobile it may flex to avoid overflow.
+                if (showFullNav)
+                  _Brand(onTap: () => context.go('/'))
+                else
+                  Flexible(child: _Brand(onTap: () => context.go('/'))),
                 const Spacer(),
-                if (!isTablet) ...[
+                if (showFullNav) ...[
                   for (final item in kNavItems)
                     _NavEntry(item: item, currentRoute: currentRoute),
                   const SizedBox(width: 12),
@@ -68,30 +77,37 @@ class _Brand extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(SiteInfo.logoAsset, height: 46),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  SiteInfo.companyName,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontSize: 20,
-                        height: 1,
-                      ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  SiteInfo.tagline.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 9.5,
-                    letterSpacing: 1.4,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.slate500,
+            Image.asset(SiteInfo.logoAsset, height: 56),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    SiteInfo.companyName,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 25,
+                      height: 1,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                      color: AppColors.navy900,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 3),
+                  Text(
+                    SiteInfo.tagline.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 10,
+                      letterSpacing: 1.8,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.navy700,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -191,8 +207,9 @@ class _NavEntryState extends State<_NavEntry> {
           },
           child: _NavLink(
             label: widget.item.label,
-            active: _isActive || _hover,
+            active: _isActive,
             trailing: Icons.keyboard_arrow_down_rounded,
+            expanded: _hover,
             onTap: () => context.go(widget.item.route),
           ),
         ),
@@ -217,16 +234,16 @@ class _DropdownPanel extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: AppColors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.slate200),
           boxShadow: [
             BoxShadow(
-              color: AppColors.navy900.withValues(alpha: 0.12),
-              blurRadius: 24,
-              offset: const Offset(0, 12),
+              color: AppColors.navy900.withValues(alpha: 0.14),
+              blurRadius: 30,
+              offset: const Offset(0, 16),
             ),
           ],
         ),
@@ -265,25 +282,49 @@ class _DropdownItemState extends State<_DropdownItem> {
 
   @override
   Widget build(BuildContext context) {
+    final highlighted = widget.active || _hover;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
           width: double.infinity,
-          color: _hover ? AppColors.slate100 : Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          child: Text(
-            widget.label,
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 15,
-              color: (widget.active || _hover)
-                  ? AppColors.navy900
-                  : AppColors.slate700,
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: highlighted ? AppColors.green050 : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                width: highlighted ? 6 : 0,
+                height: 6,
+                margin: EdgeInsets.only(right: highlighted ? 10 : 0),
+                decoration: const BoxDecoration(
+                  color: AppColors.green600,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontWeight:
+                        highlighted ? FontWeight.w600 : FontWeight.w500,
+                    fontSize: 14.5,
+                    letterSpacing: 0.1,
+                    color: highlighted
+                        ? AppColors.navy900
+                        : AppColors.slate700,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -297,11 +338,13 @@ class _NavLink extends StatefulWidget {
     required this.onTap,
     this.active = false,
     this.trailing,
+    this.expanded = false,
   });
   final String label;
   final VoidCallback onTap;
   final bool active;
   final IconData? trailing;
+  final bool expanded;
 
   @override
   State<_NavLink> createState() => _NavLinkState();
@@ -312,48 +355,53 @@ class _NavLinkState extends State<_NavLink> {
 
   @override
   Widget build(BuildContext context) {
-    final active = widget.active || _hover;
+    final active = widget.active;
+    final soft = _hover || widget.expanded;
+    final highlighted = active || soft;
+
+    final Color bg = active
+        ? AppColors.green600
+        : (soft ? AppColors.green050 : Colors.transparent);
+    final Color fg = active
+        ? AppColors.white
+        : (soft ? AppColors.green700 : AppColors.slate700);
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
           decoration: BoxDecoration(
-            color: _hover ? AppColors.slate100 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+            color: bg,
+            borderRadius: BorderRadius.circular(999),
           ),
-          child: Column(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.label,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: active ? AppColors.navy900 : AppColors.slate700,
-                    ),
-                  ),
-                  if (widget.trailing != null)
-                    Icon(widget.trailing, size: 18, color: AppColors.slate500),
-                ],
-              ),
-              const SizedBox(height: 3),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                height: 2,
-                width: widget.active ? 20 : 0,
-                decoration: BoxDecoration(
-                  color: AppColors.red600,
-                  borderRadius: BorderRadius.circular(2),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                style: TextStyle(
+                  fontSize: 14.5,
+                  letterSpacing: 0.2,
+                  fontWeight: highlighted ? FontWeight.w600 : FontWeight.w500,
+                  color: fg,
                 ),
+                child: Text(widget.label),
               ),
+              if (widget.trailing != null) ...[
+                const SizedBox(width: 4),
+                AnimatedRotation(
+                  turns: widget.expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 220),
+                  child: Icon(widget.trailing, size: 18, color: fg),
+                ),
+              ],
             ],
           ),
         ),
@@ -474,8 +522,7 @@ class _MobileLink extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(
-            fontFamily: 'SpaceGrotesk',
+          style: GoogleFonts.montserrat(
             fontSize: indented ? 15 : 19,
             fontWeight: indented ? FontWeight.w500 : FontWeight.w600,
             color: active

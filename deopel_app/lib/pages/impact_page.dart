@@ -82,13 +82,13 @@ class _ImpactGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final columns = width < 720 ? 1 : 2;
     return LayoutBuilder(
       builder: (context, constraints) {
         const gap = 24.0;
+        final columns = gridColumnsFor(constraints.maxWidth,
+            minItemWidth: 360, maxColumns: 2);
         final cardWidth =
-            (constraints.maxWidth - gap * (columns - 1)) / columns;
+            gridItemWidth(constraints.maxWidth, columns, spacing: gap);
         return Wrap(
           spacing: gap,
           runSpacing: gap,

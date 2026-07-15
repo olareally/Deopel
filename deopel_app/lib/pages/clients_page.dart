@@ -8,8 +8,6 @@ class ClientsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final columns = width < 640 ? 1 : (width < 1024 ? 2 : 3);
     return Column(
       children: [
         const PageBanner(
@@ -25,8 +23,10 @@ class ClientsPage extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 const gap = 20.0;
+                final columns = gridColumnsFor(constraints.maxWidth,
+                    minItemWidth: 300, maxColumns: 3);
                 final cardWidth =
-                    (constraints.maxWidth - gap * (columns - 1)) / columns;
+                    gridItemWidth(constraints.maxWidth, columns, spacing: gap);
                 return Wrap(
                   spacing: gap,
                   runSpacing: gap,

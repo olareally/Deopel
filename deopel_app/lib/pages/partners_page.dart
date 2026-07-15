@@ -8,8 +8,6 @@ class PartnersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final columns = width < 720 ? 1 : (width < 1024 ? 2 : 3);
     return Column(
       children: [
         const PageBanner(
@@ -26,8 +24,10 @@ class PartnersPage extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 const gap = 24.0;
+                final columns = gridColumnsFor(constraints.maxWidth,
+                    minItemWidth: 300, maxColumns: 3);
                 final cardWidth =
-                    (constraints.maxWidth - gap * (columns - 1)) / columns;
+                    gridItemWidth(constraints.maxWidth, columns, spacing: gap);
                 return Wrap(
                   spacing: gap,
                   runSpacing: gap,
@@ -59,12 +59,14 @@ class PartnersPage extends StatelessWidget {
                                       .titleLarge
                                       ?.copyWith(fontSize: 17.5),
                                 ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  kPartners[i].details,
-                                  style:
-                                      Theme.of(context).textTheme.bodyMedium,
-                                ),
+                                if (kPartners[i].details.isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    kPartners[i].details,
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                ],
                               ],
                             ),
                           ),

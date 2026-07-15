@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart';
 
 import 'theme/app_theme.dart';
 import 'widgets/site_header.dart';
 import 'widgets/site_footer.dart';
+import 'widgets/floating_actions.dart';
 import 'pages/home_page.dart';
 import 'pages/who_page.dart';
 import 'pages/what_page.dart';
@@ -13,8 +15,11 @@ import 'pages/partners_page.dart';
 import 'pages/clients_page.dart';
 import 'pages/gallery_page.dart';
 import 'pages/contact_page.dart';
+import 'pages/service_detail_pages.dart';
 
 void main() {
+  // Clean URLs without the leading "#/" (e.g. /contact instead of /#/contact).
+  usePathUrlStrategy();
   runApp(const DeopelApp());
 }
 
@@ -43,6 +48,12 @@ final GoRouter _router = GoRouter(
         _page('/mission', const MissionPage()),
         _page('/impact', const ImpactPage()),
         _page('/what', const WhatPage()),
+        _page('/services/electrical', const ElectricalServicePage()),
+        _page('/services/mechanical', const MechanicalServicePage()),
+        _page('/services/environmental', const EnvironmentalServicePage()),
+        _page('/capacity-building', const CapacityBuildingPage()),
+        _page('/capacity-building/engineering-designs',
+            const EngineeringDesignsPage()),
         _page('/partners', const PartnersPage()),
         _page('/clients', const ClientsPage()),
         _page('/gallery', const GalleryPage()),
@@ -55,13 +66,13 @@ final GoRouter _router = GoRouter(
 GoRoute _page(String path, Widget child) {
   return GoRoute(
     path: path,
-    pageBuilder: (context, state) => CustomTransitionPage(
+    // Instant page swaps. A fading/animated transition overlaps the outgoing
+    // and incoming pages, which lays them out at transient sizes and can race
+    // element deactivation (throwing `_dependents.isEmpty`). Swapping without
+    // an animation keeps each route's lifecycle isolated and stable.
+    pageBuilder: (context, state) => NoTransitionPage(
       key: state.pageKey,
       child: child,
-      transitionsBuilder: (context, animation, _, widget) {
-        return FadeTransition(opacity: animation, child: widget);
-      },
-      transitionDuration: const Duration(milliseconds: 300),
     ),
   );
 }
@@ -80,6 +91,26 @@ class _SiteShellState extends State<SiteShell> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _scrollController = ScrollController();
   String? _lastPath;
+  bool _showToTop = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    final show = _scrollController.hasClients && _scrollController.offset > 500;
+    if (show != _showToTop) setState(() => _showToTop = show);
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOutCubic,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,21 +128,29 @@ class _SiteShellState extends State<SiteShell> {
       key: _scaffoldKey,
       backgroundColor: AppColors.white,
       endDrawer: const MobileNavDrawer(),
-      body: Column(
+      body: Stack(
         children: [
-          SiteHeader(
-            onOpenMenu: () => _scaffoldKey.currentState?.openEndDrawer(),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: Column(
-                children: [
-                  widget.child,
-                  const SiteFooter(),
-                ],
+          Column(
+            children: [
+              SiteHeader(
+                onOpenMenu: () => _scaffoldKey.currentState?.openEndDrawer(),
               ),
-            ),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Column(
+                    children: [
+                      widget.child,
+                      const SiteFooter(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          FloatingActions(
+            showToTop: _showToTop,
+            onToTop: _scrollToTop,
           ),
         ],
       ),
@@ -120,6 +159,7 @@ class _SiteShellState extends State<SiteShell> {
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }

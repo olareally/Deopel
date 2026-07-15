@@ -36,6 +36,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^6.2.1
   go_router: ^14.6.2
+  visibility_detector: ^0.4.0+2
+  url_launcher: ^6.3.1
+  flutter_web_plugins:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +65,8 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/gallery/artisan/
+    - assets/gallery/Engineering/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

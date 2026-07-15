@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import '../theme/app_theme.dart';
 
 /// Constrains content to the site's max width with responsive horizontal
@@ -220,7 +221,7 @@ class _BrandButtonState extends State<BrandButton> {
   }
 }
 
-/// Fades + slides its child in when first built (the "reveal" effect).
+/// Fades + slides its child in the first time it scrolls into view.
 class Reveal extends StatefulWidget {
   const Reveal({super.key, required this.child, this.delayMs = 0});
   final Widget child;
@@ -231,27 +232,120 @@ class Reveal extends StatefulWidget {
 }
 
 class _RevealState extends State<Reveal> {
+  final Key _detectorKey = UniqueKey();
   bool _shown = false;
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration(milliseconds: widget.delayMs + 40), () {
-      if (mounted) setState(() => _shown = true);
+    // Safety net: reveal anyway if visibility never reports (e.g. tests).
+    Future.delayed(const Duration(milliseconds: 1400), () {
+      if (mounted && !_shown) setState(() => _shown = true);
     });
+  }
+
+  void _onVisibility(VisibilityInfo info) {
+    if (_shown || info.visibleFraction < 0.08) return;
+    if (widget.delayMs > 0) {
+      Future.delayed(Duration(milliseconds: widget.delayMs), () {
+        if (mounted && !_shown) setState(() => _shown = true);
+      });
+    } else if (mounted) {
+      setState(() => _shown = true);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedOpacity(
-      opacity: _shown ? 1 : 0,
-      duration: const Duration(milliseconds: 550),
-      curve: Curves.easeOut,
-      child: AnimatedSlide(
-        offset: _shown ? Offset.zero : const Offset(0, 0.12),
-        duration: const Duration(milliseconds: 550),
+    return VisibilityDetector(
+      key: _detectorKey,
+      onVisibilityChanged: _onVisibility,
+      child: AnimatedOpacity(
+        opacity: _shown ? 1 : 0,
+        duration: const Duration(milliseconds: 620),
         curve: Curves.easeOut,
-        child: widget.child,
+        child: AnimatedSlide(
+          offset: _shown ? Offset.zero : const Offset(0, 0.14),
+          duration: const Duration(milliseconds: 620),
+          curve: Curves.easeOutCubic,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Animates an integer up from zero to the number embedded in [value] (e.g.
+/// "500+", "90%", "12+") the first time it scrolls into view. Any non-digit
+/// prefix/suffix (like "+", "%") is preserved.
+class CountUp extends StatefulWidget {
+  const CountUp(
+    this.value, {
+    super.key,
+    this.style,
+    this.duration = const Duration(milliseconds: 1600),
+  });
+
+  final String value;
+  final TextStyle? style;
+  final Duration duration;
+
+  @override
+  State<CountUp> createState() => _CountUpState();
+}
+
+class _CountUpState extends State<CountUp>
+    with SingleTickerProviderStateMixin {
+  final Key _detectorKey = UniqueKey();
+  late final int _target;
+  late final String _prefix;
+  late final String _suffix;
+  late final AnimationController _controller;
+  late final Animation<double> _anim;
+  bool _started = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final match =
+        RegExp(r'^(\D*)(\d+)(.*)$').firstMatch(widget.value.trim());
+    _prefix = match?.group(1) ?? '';
+    _target = int.tryParse(match?.group(2) ?? '0') ?? 0;
+    _suffix = match?.group(3) ?? '';
+    _controller = AnimationController(vsync: this, duration: widget.duration);
+    _anim = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    // Safety net if visibility never reports.
+    Future.delayed(const Duration(milliseconds: 1500), _startIfNeeded);
+  }
+
+  void _startIfNeeded() {
+    if (!_started && mounted) {
+      _started = true;
+      _controller.forward();
+    }
+  }
+
+  void _onVisibility(VisibilityInfo info) {
+    if (!_started && info.visibleFraction > 0.15) _startIfNeeded();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return VisibilityDetector(
+      key: _detectorKey,
+      onVisibilityChanged: _onVisibility,
+      child: AnimatedBuilder(
+        animation: _anim,
+        builder: (context, _) {
+          final current = (_anim.value * _target).round();
+          return Text('$_prefix$current$_suffix', style: widget.style);
+        },
       ),
     );
   }
@@ -265,12 +359,16 @@ class HoverCard extends StatefulWidget {
     this.padding = const EdgeInsets.all(26),
     this.accentBar = true,
     this.onTap,
+    this.background = AppColors.white,
+    this.accentColor = AppColors.red600,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final bool accentBar;
   final VoidCallback? onTap;
+  final Color background;
+  final Color accentColor;
 
   @override
   State<HoverCard> createState() => _HoverCardState();
@@ -294,10 +392,10 @@ class _HoverCardState extends State<HoverCard> {
           curve: Curves.easeOut,
           transform: Matrix4.translationValues(0, _hover ? -6 : 0, 0),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: widget.background,
             borderRadius: BorderRadius.circular(AppSizing.radius),
             border: Border.all(
-              color: _hover ? AppColors.red600 : AppColors.slate200,
+              color: _hover ? widget.accentColor : AppColors.slate200,
             ),
             boxShadow: [
               BoxShadow(
@@ -320,7 +418,7 @@ class _HoverCardState extends State<HoverCard> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
                       width: _hover ? 5 : 0,
-                      color: AppColors.red600,
+                      color: widget.accentColor,
                     ),
                   ),
               ],
@@ -482,6 +580,61 @@ class CheckItem extends StatelessWidget {
   }
 }
 
+/// A light, decorative section background: a soft gradient with two faint
+/// brand-coloured glows. Adds depth to otherwise-plain sections.
+class SoftSection extends StatelessWidget {
+  const SoftSection({super.key, required this.child, this.small = false});
+  final Widget child;
+  final bool small;
+
+  @override
+  Widget build(BuildContext context) {
+    final isMobile = AppSizing.isMobile(context);
+    final v = small ? (isMobile ? 48.0 : 64.0) : (isMobile ? 64.0 : 96.0);
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFF6F8FE), Color(0xFFEEF2FB)],
+        ),
+      ),
+      child: ClipRect(
+        child: Stack(
+          children: [
+            Positioned(
+              top: -80,
+              right: -60,
+              child: _glow(AppColors.navy700.withValues(alpha: 0.10)),
+            ),
+            Positioned(
+              bottom: -100,
+              left: -70,
+              child: _glow(AppColors.green600.withValues(alpha: 0.08)),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: v),
+              child: child,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _glow(Color color) => Container(
+        width: 340,
+        height: 340,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: color, blurRadius: 150, spreadRadius: 60),
+          ],
+        ),
+      );
+}
+
 /// Standard vertical padding wrapper for a page section.
 class SectionPadding extends StatelessWidget {
   const SectionPadding({
@@ -505,6 +658,23 @@ class SectionPadding extends StatelessWidget {
       child: child,
     );
   }
+}
+
+/// Chooses a column count for a wrapped grid based on the actual available
+/// [maxWidth] (not the screen width), so it stays correct during route
+/// transitions and inside constrained containers.
+int gridColumnsFor(double maxWidth, {double minItemWidth = 300, int maxColumns = 3}) {
+  if (!maxWidth.isFinite || maxWidth <= 0) return 1;
+  final fit = (maxWidth / minItemWidth).floor();
+  return fit.clamp(1, maxColumns);
+}
+
+/// A safe per-item width for a wrapped grid. Never returns a negative value,
+/// which would otherwise throw "BoxConstraints has a negative minimum width".
+double gridItemWidth(double maxWidth, int columns, {double spacing = 24}) {
+  if (!maxWidth.isFinite || maxWidth <= 0 || columns < 1) return 0;
+  final w = (maxWidth - spacing * (columns - 1)) / columns;
+  return w < 0 ? 0 : w;
 }
 
 /// A single column in a [ResponsiveRow]. [flex] > 0 makes it expand to fill

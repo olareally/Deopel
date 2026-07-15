@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../data/site_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -62,14 +63,16 @@ class _HeroSliderState extends State<_HeroSlider> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Crossfading background image
+          // Crossfading background image (fills the full hero width)
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 900),
-            child: Image.asset(
-              slide.image,
+            child: SizedBox.expand(
               key: ValueKey(slide.image),
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
+              child: Image.asset(
+                slide.image,
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+              ),
             ),
           ),
           // Gradient overlay for readability
@@ -240,7 +243,7 @@ class _StatsStrip extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      CountUp(
                         stat.value,
                         style: Theme.of(context)
                             .textTheme
@@ -272,8 +275,7 @@ class _AboutTeaser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SectionPadding(
-      color: AppColors.bgSoft,
+    return SoftSection(
       child: ContentContainer(
         child: ResponsiveRow(
           spacing: 48,
@@ -335,7 +337,7 @@ class _AboutTeaser extends StatelessWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.asset('assets/images/training-room.png',
+                        Image.asset('assets/images/weld2.jpg',
                             fit: BoxFit.cover),
                         Positioned(
                           left: 18,
@@ -396,13 +398,15 @@ class _ServicesSection extends StatelessWidget {
       child: ContentContainer(
         child: Column(
           children: [
-            const SectionHeader(
-              eyebrow: 'What We Do',
-              title:
-                  'Practical capacity building across artisans, engineering and industry skills',
-              lede:
-                  'From building services and oil & gas to design, media and '
-                  'agriculture — one partner preparing youth for self-reliant careers.',
+            const Reveal(
+              child: SectionHeader(
+                eyebrow: 'What We Do',
+                title:
+                    'Practical capacity building across artisans, engineering and industry skills',
+                lede:
+                    'From building services and oil & gas to design, media and '
+                    'agriculture — one partner preparing youth for self-reliant careers.',
+              ),
             ),
             const SizedBox(height: 48),
             ServicesGrid(services: kServices),
@@ -425,13 +429,13 @@ class ServicesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final columns = width < 640 ? 1 : (width < 1024 ? 2 : 3);
     return LayoutBuilder(
       builder: (context, constraints) {
         const gap = 24.0;
+        final columns = gridColumnsFor(constraints.maxWidth,
+            minItemWidth: 300, maxColumns: 3);
         final cardWidth =
-            (constraints.maxWidth - gap * (columns - 1)) / columns;
+            gridItemWidth(constraints.maxWidth, columns, spacing: gap);
         return Wrap(
           spacing: gap,
           runSpacing: gap,
@@ -441,7 +445,10 @@ class ServicesGrid extends StatelessWidget {
                 width: cardWidth,
                 child: Reveal(
                   delayMs: (i % columns) * 90,
-                  child: _ServiceCard(service: services[i]),
+                  child: _ServiceCard(
+                    service: services[i],
+                    color: kServiceColors[i % kServiceColors.length],
+                  ),
                 ),
               ),
           ],
@@ -451,25 +458,53 @@ class ServicesGrid extends StatelessWidget {
   }
 }
 
+/// A tint + solid pair used to colour each service card.
+class ServiceColor {
+  const ServiceColor(this.tint, this.solid);
+  final Color tint;
+  final Color solid;
+}
+
+const List<ServiceColor> kServiceColors = [
+  ServiceColor(Color(0xFFFEF2F2), Color(0xFFED1C24)), // red
+  ServiceColor(Color(0xFFEAF7EE), Color(0xFF22B14C)), // green
+  ServiceColor(Color(0xFFEAF1FF), Color(0xFF2563EB)), // blue
+  ServiceColor(Color(0xFFFFF4E6), Color(0xFFE8890C)), // amber
+  ServiceColor(Color(0xFFF3EEFE), Color(0xFF7C3AED)), // purple
+  ServiceColor(Color(0xFFE7FAF5), Color(0xFF0D9488)), // teal
+];
+
 class _ServiceCard extends StatelessWidget {
-  const _ServiceCard({required this.service});
+  const _ServiceCard({required this.service, required this.color});
   final ServiceItem service;
+  final ServiceColor color;
 
   @override
   Widget build(BuildContext context) {
+    final hasLink = service.route != null;
     return HoverCard(
       padding: const EdgeInsets.fromLTRB(26, 28, 26, 26),
+      background: color.tint,
+      accentColor: color.solid,
+      onTap: hasLink ? () => context.go(service.route!) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
-              color: AppColors.red050,
+              color: color.solid,
               borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: color.solid.withValues(alpha: 0.35),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
-            child: Icon(service.icon, color: AppColors.red600, size: 26),
+            child: Icon(service.icon, color: AppColors.white, size: 26),
           ),
           const SizedBox(height: 20),
           Text(
@@ -484,6 +519,24 @@ class _ServiceCard extends StatelessWidget {
             service.description,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
+          if (hasLink) ...[
+            const SizedBox(height: 16),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Learn more',
+                  style: TextStyle(
+                    color: color.solid,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(Icons.arrow_forward, size: 16, color: color.solid),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -491,6 +544,17 @@ class _ServiceCard extends StatelessWidget {
 }
 
 /// ============ STATS BAND (navy, big numbers) ============
+Widget _glowCircle(Color color, {double size = 340}) => Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(color: color, blurRadius: 150, spreadRadius: 60),
+        ],
+      ),
+    );
+
 class _StatsBand extends StatelessWidget {
   const _StatsBand();
 
@@ -505,55 +569,86 @@ class _StatsBand extends StatelessWidget {
     ];
     return Container(
       width: double.infinity,
-      color: AppColors.navy900,
-      padding: EdgeInsets.symmetric(vertical: isMobile ? 56 : 80),
-      child: ContentContainer(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF17275F), AppColors.navy900, Color(0xFF0A1330)],
+        ),
+      ),
+      child: ClipRect(
+        child: Stack(
           children: [
-            const Eyebrow('Outcomes you can measure',
-                color: AppColors.redSoft),
-            const SizedBox(height: 14),
-            Text(
-              'Built to build people — every program, every trainee.',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(color: AppColors.white, fontSize: 30),
+            Positioned(
+              top: -70,
+              right: -50,
+              child: _glowCircle(AppColors.red600.withValues(alpha: 0.22)),
             ),
-            const SizedBox(height: 40),
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              runSpacing: 28,
-              children: [
-                for (final stat in bandStats)
-                  SizedBox(
-                    width: isMobile
-                        ? (MediaQuery.sizeOf(context).width - 40) / 2
-                        : 250,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            Positioned(
+              bottom: -90,
+              left: -60,
+              child: _glowCircle(AppColors.green600.withValues(alpha: 0.16)),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: isMobile ? 56 : 80),
+              child: ContentContainer(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Reveal(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Eyebrow('Outcomes you can measure',
+                              color: AppColors.redSoft),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Built to build people — every program, every trainee.',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(color: AppColors.white, fontSize: 30),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      runSpacing: 28,
                       children: [
-                        Text(
-                          stat.value,
-                          style: Theme.of(context)
-                              .textTheme
-                              .displayMedium
-                              ?.copyWith(
-                                color: AppColors.white,
-                                fontSize: 44,
-                              ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          stat.label,
-                          style: const TextStyle(
-                              color: Colors.white60, fontSize: 14.5),
-                        ),
+                        for (final stat in bandStats)
+                          SizedBox(
+                            width: isMobile
+                                ? (MediaQuery.sizeOf(context).width - 40) / 2
+                                : 250,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CountUp(
+                                  stat.value,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displayMedium
+                                      ?.copyWith(
+                                        color: AppColors.white,
+                                        fontSize: 44,
+                                      ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  stat.label,
+                                  style: const TextStyle(
+                                      color: Colors.white60, fontSize: 14.5),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
-                  ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -616,6 +711,7 @@ class _ClientsMarqueeState extends State<_ClientsMarquee>
     final loop = [..._names, ..._names, ..._names];
     return SectionPadding(
       small: true,
+      color: AppColors.bgSoft,
       child: Column(
         children: [
           Text(
@@ -629,7 +725,7 @@ class _ClientsMarqueeState extends State<_ClientsMarquee>
           ),
           const SizedBox(height: 28),
           SizedBox(
-            height: 40,
+            height: 52,
             child: ListView.builder(
               controller: _controller,
               scrollDirection: Axis.horizontal,
@@ -637,24 +733,45 @@ class _ClientsMarqueeState extends State<_ClientsMarquee>
               itemCount: loop.length,
               itemBuilder: (context, i) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 22),
-                  child: Row(
-                    children: [
-                      Text(
-                        loop[i],
-                        style: TextStyle(
-                          fontFamily: 'SpaceGrotesk',
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.slate300,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Container(
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: AppColors.slate200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.navy900.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(left: 22),
-                        child: Text('•',
-                            style: TextStyle(color: AppColors.red600)),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.green600,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          loop[i],
+                          style: GoogleFonts.montserrat(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.navy800,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -676,26 +793,27 @@ class _CtaBand extends StatelessWidget {
     return SectionPadding(
       small: true,
       child: ContentContainer(
-        child: Container(
-          padding: EdgeInsets.all(isMobile ? 28 : 48),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSizing.radiusLg),
-            gradient: const LinearGradient(
-              colors: [AppColors.red600, AppColors.red700],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.red600.withValues(alpha: 0.35),
-                blurRadius: 40,
-                offset: const Offset(0, 20),
+        child: Reveal(
+          child: Container(
+            padding: EdgeInsets.all(isMobile ? 28 : 48),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppSizing.radiusLg),
+              gradient: const LinearGradient(
+                colors: [AppColors.red600, AppColors.red700],
               ),
-            ],
-          ),
-          child: ResponsiveRow(
-            spacing: 24,
-            stackBelow: AppSizing.mobileBreakpoint,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.red600.withValues(alpha: 0.35),
+                  blurRadius: 40,
+                  offset: const Offset(0, 20),
+                ),
+              ],
+            ),
+            child: ResponsiveRow(
+              spacing: 24,
+              stackBelow: AppSizing.mobileBreakpoint,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
               Flexed(
                 6,
                 Column(
@@ -734,6 +852,7 @@ class _CtaBand extends StatelessWidget {
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),

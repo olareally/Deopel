@@ -1,11 +1,11 @@
 {
-    "name": "deopel_app",
-    "short_name": "deopel_app",
+    "name": "Deopel Engineering Associates Limited",
+    "short_name": "Deopel",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0E1A44",
+    "theme_color": "#0E1A44",
+    "description": "Capacity building and practical training in artisan, engineering and industry skills across Nigeria.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

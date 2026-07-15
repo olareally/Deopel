@@ -19,6 +19,13 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Deopel Engineering Associates Limited — capacity building and practical training in artisan, engineering and industry skills across Nigeria.">
+  <meta name="theme-color" content="#0E1A44">
+
+  <!-- Open Graph / social sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Deopel Engineering Associates Limited">
+  <meta property="og:description" content="Capacity building and practical training in artisan, engineering and industry skills across Nigeria.">
+  <meta property="og:image" content="icons/Icon-512.png">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -31,8 +38,58 @@
 
   <title>Deopel Engineering Associates Limited</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    #deopel-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 26px;
+      background: radial-gradient(1200px 600px at 50% 35%, #16245C 0%, #0E1A44 60%, #0B1533 100%);
+      transition: opacity .5s ease;
+    }
+    #deopel-splash.hide { opacity: 0; pointer-events: none; }
+    #deopel-splash .logo {
+      width: 96px; height: 96px;
+      padding: 14px;
+      background: #fff;
+      border-radius: 22px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.35);
+      animation: deopel-pop .6s cubic-bezier(.2,.8,.2,1);
+    }
+    #deopel-splash .word {
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+      font-weight: 800; letter-spacing: .5px;
+      color: #ED1C24; font-size: 24px;
+    }
+    #deopel-splash .bar {
+      width: 140px; height: 4px; border-radius: 4px;
+      background: rgba(255,255,255,.15); overflow: hidden;
+    }
+    #deopel-splash .bar::before {
+      content: ''; display: block; height: 100%; width: 40%;
+      border-radius: 4px; background: #ED1C24;
+      animation: deopel-load 1.1s ease-in-out infinite;
+    }
+    @keyframes deopel-load {
+      0% { transform: translateX(-120%); }
+      100% { transform: translateX(360%); }
+    }
+    @keyframes deopel-pop {
+      from { transform: scale(.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
 </head>
 <body>
+  <div id="deopel-splash">
+    <img class="logo" src="icons/Icon-192.png" alt="Deopel">
+    <div class="word">DEOPEL</div>
+    <div class="bar"></div>
+  </div>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
@@ -42,5 +99,15 @@
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // Fade out the branded splash once Flutter paints its first frame.
+    window.addEventListener('flutter-first-frame', function () {
+      var splash = document.getElementById('deopel-splash');
+      if (splash) {
+        splash.classList.add('hide');
+        setTimeout(function () { splash.remove(); }, 600);
+      }
+    });
+  </script>
 </body>
 </html>

@@ -8,9 +8,14 @@ class SiteInfo {
   static const String companyName = 'Deopel';
   static const String companyFull = 'Deopel Engineering Associates Limited';
   static const String tagline = 'Engineering Associates Limited';
-  static const String phone = '+234 800 123 4567';
-  static const String email = 'info@deopelengineering.com';
-  static const String location = 'Lagos, Nigeria';
+  static const String phone = '+234 803 341 3053';
+  static const String phoneDigits = '2348033413053';
+  static const String phone2 = '+234 803 367 1015';
+  static const String phone2Digits = '2348033671015';
+  static const String email = 'info@deopelengas.com';
+  static const String website = 'www.deopelengas.com';
+  static const String location =
+      '108 Ada George Road, Chinda Bus Stop, Mile 4, Port Harcourt, Rivers State';
   static const String logoAsset = 'assets/images/deopel-logo.png';
 }
 
@@ -51,6 +56,36 @@ class HeroSlide {
 }
 
 const List<HeroSlide> kHeroSlides = [
+  HeroSlide(
+    eyebrow: 'Oil & Gas Operations',
+    title: 'Powering Nigeria’s energy sector with ',
+    accent: 'skilled hands.',
+    body:
+        'From upstream production to downstream distribution, our trainees are '
+        'prepared for careers in oil and gas operations, pipeline maintenance '
+        'and refinery support — built on safety, precision and industry best practice.',
+    image: 'assets/images/oil1.jpg',
+  ),
+  HeroSlide(
+    eyebrow: 'Energy Infrastructure',
+    title: 'Building the workforce behind ',
+    accent: 'Nigeria’s oil & gas future.',
+    body:
+        'Deopel equips trainees with practical exposure to petroleum facilities, '
+        'process plants and industrial equipment — giving them the confidence '
+        'and competence to thrive in one of the world’s most demanding industries.',
+    image: 'assets/images/oil2.webp',
+  ),
+  HeroSlide(
+    eyebrow: 'Welding & Fabrication',
+    title: 'Precision welding for ',
+    accent: 'industrial excellence.',
+    body:
+        'Our welding and fabrication training covers arc, MIG, TIG and pipeline '
+        'welding techniques — producing certified welders ready for construction, '
+        'oil & gas and manufacturing projects across the region.',
+    image: 'assets/images/weld1.webp',
+  ),
   HeroSlide(
     eyebrow: 'Capacity Building',
     title: 'Training young talent for artisanship, engineering and ',
@@ -96,49 +131,28 @@ const List<Stat> kStats = [
 ];
 
 class ServiceItem {
-  const ServiceItem(this.icon, this.title, this.description);
+  const ServiceItem(this.icon, this.title, this.description, {this.route});
   final IconData icon;
   final String title;
   final String description;
+  final String? route;
 }
 
 const List<ServiceItem> kServices = [
-  ServiceItem(
-    Icons.handyman_outlined,
-    'Building Services & Artisan Skills',
-    'Electrical wiring, plumbing, refrigeration, welding, painting, tiling, '
-        'scaffolding and construction finishing skills for domestic and industrial '
-        'facilities.',
-  ),
-  ServiceItem(
-    Icons.oil_barrel_outlined,
-    'Oil & Gas Industry Skills',
-    'Process control, instrumentation, industrial electrical, firefighting, HSE, '
-        'welding, NDT, crane and forklift operation, and heavy-duty maintenance.',
-  ),
-  ServiceItem(
-    Icons.directions_car_outlined,
-    'Automobile Diagnostics & Maintenance',
-    'Car diagnostics, engine maintenance, auto electrical systems, air '
-        'conditioning, welding, panel beating and paint spraying.',
-  ),
   ServiceItem(
     Icons.architecture_outlined,
     'Engineering Design Capacity Building',
     'Electrical, process control, mechanical and civil/structural design '
         'training for job placement and self-employment.',
+    route: '/capacity-building/engineering-designs',
   ),
   ServiceItem(
-    Icons.videocam_outlined,
-    'Social & Event Coverage',
-    'Sound engineering, cinematography, video recording and content creation '
-        'training for public and corporate events.',
-  ),
-  ServiceItem(
-    Icons.agriculture_outlined,
-    'Agriculture & Entrepreneurship',
-    'Cropping, animal husbandry, poultry, catering, confectionery, fashion '
-        'design and interior/exterior decoration training for sustainable businesses.',
+    Icons.handyman_outlined,
+    'Building Services & Artisan Skills',
+    'A full spectrum of practical training — building services & artisan '
+        'skills, oil & gas industry skills, automobile diagnostics, event '
+        'coverage, agriculture, entrepreneurship, catering and more.',
+    route: '/capacity-building',
   ),
 ];
 
@@ -179,35 +193,16 @@ class PartnerItem {
 
 const List<PartnerItem> kPartners = [
   PartnerItem(
-    'Advance Fabrication Ltd.',
-    '#280 Trans Amadi Road, by Nipost Building',
-  ),
-  PartnerItem(
-    'Bie – Usha (W/A) Ltd.',
-    'Plot 201B PHC/Aba Express Road, Rumuola Junction, P.H.',
-  ),
-  PartnerItem(
-    'Globspec Engineering and Trading Ltd.',
-    'No. 52 Igboukwu Street, D-line, P.H.',
-  ),
-  PartnerItem(
-    'Professional Workshop Partners',
-    'Local workshops providing practical placements and hands-on training.',
-  ),
-  PartnerItem(
-    'Certification Bodies',
-    'National and industry certification partners for training credentials.',
+    'Various workshop owners and operators in equipment services maintenance',
+    '',
   ),
 ];
 
 const List<String> kClients = [
-  'Niger Delta Development Corporation (NDDC)',
-  'Rivers State Ministry of Power',
   'Rivers State Sustainable Development & Monitoring Board (RSSDA)',
   'Nigerian Content Development and Monitoring Board (NCDMB)',
   'Shell Petroleum Development Company (SPDC)',
   'Nigeria Liquefied Natural Gas (NLNG)',
-  'Rivers State Ministry of Works',
   'Rivers State Ministry of Employment Generation and Empowerment',
   'Rivers State Ministry of Youth Development',
   'Local Government Councils',
@@ -221,9 +216,23 @@ class GalleryItem {
   final String image;
 }
 
-const List<GalleryItem> kGallery = [
-  GalleryItem('Workshop sessions', 'assets/images/training-1.png'),
-  GalleryItem('Technical presentations', 'assets/images/training-2.png'),
-  GalleryItem('Training environment', 'assets/images/training-room.png'),
-  GalleryItem('Hands-on practical labs', 'assets/images/training.png'),
+const List<GalleryItem> kArtisanGallery = [
+  GalleryItem('Bricklaying', 'assets/gallery/artisan/Bricklaying.png'),
+  GalleryItem('Plumbing', 'assets/gallery/artisan/Plumbing.png'),
+  GalleryItem('Welding', 'assets/gallery/artisan/Welding 1.png'),
+  GalleryItem('Air Conditioning', 'assets/gallery/artisan/Air Conditioner.png'),
+  GalleryItem('Tiling', 'assets/gallery/artisan/Tiling.png'),
+  GalleryItem('Aluminum Work', 'assets/gallery/artisan/Aluminum.png'),
+  GalleryItem('Representative/Deopel Signup', 'assets/images/training-2.png'),
+  GalleryItem('Class Room', 'assets/images/training-room.png'),
+  GalleryItem('Hands on teaching practical session', 'assets/images/training.png'),
+];
+
+const List<GalleryItem> kEngineeringGallery = [
+  GalleryItem('Electrical Installation', 'assets/gallery/Engineering/Electrical Installation.png'),
+  GalleryItem('Scaffolding', 'assets/gallery/Engineering/Scaffolding.png'),
+  GalleryItem('CCTV Systems', 'assets/gallery/Engineering/CCTV.png'),
+  GalleryItem('Welding', 'assets/gallery/Engineering/Welding.png'),
+  GalleryItem('Air Conditioning', 'assets/gallery/Engineering/Air Conditioner 2.png'),
+  GalleryItem('Aluminum Systems', 'assets/gallery/Engineering/Aluminum 2.png'),
 ];

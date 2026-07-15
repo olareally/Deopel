@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/site_data.dart';
 import '../theme/app_theme.dart';
+import '../utils/launchers.dart';
 import '../widgets/common.dart';
 
 class ContactPage extends StatelessWidget {
@@ -52,54 +53,124 @@ class _ContactDetails extends StatelessWidget {
                 ?.copyWith(fontSize: 26),
           ),
           const SizedBox(height: 24),
-          _row(Icons.phone_outlined, 'Phone', SiteInfo.phone),
-          _row(Icons.mail_outline, 'Email', SiteInfo.email),
-          _row(Icons.location_on_outlined, 'Location', SiteInfo.location),
+          _ContactRow(
+            icon: Icons.phone_outlined,
+            label: 'Phone',
+            value: SiteInfo.phone,
+            onTap: Launch.phone,
+          ),
+          _ContactRow(
+            icon: Icons.phone_outlined,
+            label: 'Phone',
+            value: SiteInfo.phone2,
+            onTap: Launch.phone2,
+          ),
+          _ContactRow(
+            icon: Icons.chat_outlined,
+            label: 'WhatsApp',
+            value: SiteInfo.phone,
+            onTap: () => Launch.whatsApp(),
+          ),
+          _ContactRow(
+            icon: Icons.mail_outline,
+            label: 'Email',
+            value: SiteInfo.email,
+            onTap: Launch.email,
+          ),
+          _ContactRow(
+            icon: Icons.language_outlined,
+            label: 'Website',
+            value: SiteInfo.website,
+            onTap: Launch.website,
+          ),
+          _ContactRow(
+            icon: Icons.location_on_outlined,
+            label: 'Office address',
+            value: SiteInfo.location,
+            onTap: Launch.maps,
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _row(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: AppColors.red050,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: AppColors.red600, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Column(
+class _ContactRow extends StatefulWidget {
+  const _ContactRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  State<_ContactRow> createState() => _ContactRowState();
+}
+
+class _ContactRowState extends State<_ContactRow> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 18),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label.toUpperCase(),
-                style: const TextStyle(
-                  color: AppColors.slate500,
-                  fontSize: 11.5,
-                  letterSpacing: 1.2,
-                  fontWeight: FontWeight.w600,
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: _hover ? AppColors.red600 : AppColors.red050,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  widget.icon,
+                  color: _hover ? AppColors.white : AppColors.red600,
+                  size: 22,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  color: AppColors.navy900,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15.5,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.label.toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.slate500,
+                        fontSize: 11.5,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.value,
+                      style: TextStyle(
+                        color: _hover ? AppColors.red600 : AppColors.navy900,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15.5,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -128,10 +199,17 @@ class _ContactFormState extends State<_ContactForm> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
+      Launch.contactInquiry(
+        name: _name.text.trim(),
+        fromEmail: _email.text.trim(),
+        message: _message.text.trim(),
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: AppColors.green600,
-          content: Text('Thanks! Your inquiry has been recorded.'),
+          content: Text(
+            'Opening your email app to send the inquiry…',
+          ),
         ),
       );
       _name.clear();

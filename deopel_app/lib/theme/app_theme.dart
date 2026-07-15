@@ -72,33 +72,36 @@ class AppTheme {
       ),
     );
 
-    final displayFont = GoogleFonts.spaceGrotesk;
+    final displayFont = GoogleFonts.montserrat;
     final bodyFont = GoogleFonts.inter;
 
+    // Base every text style on Inter, then override headings with Montserrat
+    // so the whole site shares one professional type system.
+    final baseText = GoogleFonts.interTextTheme(base.textTheme)
+        .apply(bodyColor: AppColors.slate700, displayColor: AppColors.navy900);
+
     return base.copyWith(
-      textTheme: base.textTheme
-          .apply(bodyColor: AppColors.slate700, displayColor: AppColors.navy900)
-          .copyWith(
+      textTheme: baseText.copyWith(
             displayLarge: displayFont(
-              fontWeight: FontWeight.w700,
-              height: 1.1,
-              letterSpacing: -1.2,
+              fontWeight: FontWeight.w800,
+              height: 1.08,
+              letterSpacing: -0.5,
               color: AppColors.navy900,
             ),
             displayMedium: displayFont(
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               height: 1.12,
-              letterSpacing: -0.8,
+              letterSpacing: -0.3,
               color: AppColors.navy900,
             ),
             headlineMedium: displayFont(
               fontWeight: FontWeight.w700,
-              height: 1.15,
-              letterSpacing: -0.5,
+              height: 1.18,
+              letterSpacing: -0.2,
               color: AppColors.navy900,
             ),
             titleLarge: displayFont(
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: AppColors.navy900,
             ),
             titleMedium: displayFont(
